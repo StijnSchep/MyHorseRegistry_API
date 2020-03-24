@@ -1,0 +1,41 @@
+image: node:latest
+
+stages:
+  - testing
+  - deploy_prod
+  - deploy_tester
+
+testing:
+  type: testing
+  stage: testing
+  variables:
+    NODE_ENV: development
+  before_script:
+    - npm install --no-optional
+    - npm install -g mocha
+  script:
+    - npm run test
+
+deploy_production:
+  type: deploy
+  stage: deploy_prod
+  image: ruby:latest
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=$HEROKU_PROD_APP --api-key=$HEROKU_PROD_KEY
+  only:
+    - master
+
+deploy_tester:
+  type: deploy
+  stage: deploy_tester
+  image: ruby:latest
+  variables:
+    NODE_ENV: deploy_tester
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=$HEROKU_TESTER_APP --api-key=$HEROKU_TESTER_KEY
